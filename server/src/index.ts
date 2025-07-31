@@ -1,6 +1,8 @@
 import express from 'express';
 import http from 'http';
 import connectDB from './config/db';
+
+import { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
@@ -11,38 +13,47 @@ import { SocketManager } from './sockets/socketHandlers';
 dotenv.config();
 
 const app = express();
-const server = http.createServer();
+const server = http.createServer(app);
 
 app.use(cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    //origin: "http://localhost:5173",
     credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/routes/user', userRoutes);
-app.use('/routes/chat', chatRoutes);
+app.use((req: Request, res: Response, next: NextFunction) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    if (req.method === 'POST') {
+        console.log('Request Body:', req.body);
+    }
+    next();
+});
 
-connectDB()
+app.use('/api/user', userRoutes);
+app.use('/api/chat', chatRoutes);
+
 
 const socketManager = new SocketManager(server);
 
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-    await connectDB();
-
-    server.listen(PORT, () => {
-        console.log(`server running on port ${PORT}`);
-        console.log(`enviornment:${process.env.NODE_ENV}` || 'development');
-
-    });
+    try {
+        await connectDB();
+        server.listen(PORT, () => {
+            console.log(`server running on port ${PORT}`);
+            console.log(`enviornment:${process.env.NODE_ENV}` || 'development');
+            console.log(`accepting requests from ${process.env.CLIENT_URL}`)
+        });
+    } catch (error) {
+        console.log('failed to start server', error);
+        process.exit(1);
+    }
 };
 
-startServer().catch(error => {
-    console.error('failed to start server', error);
-    process.exit();
-});
+startServer();
 
 process.on('SIGTERM', () => {
     console.log('SIGTERM recieved , shutting down gracefully');
@@ -57,8 +68,3 @@ process.on('SIGINT', () => {
         console.log('process terminated');
     });
 });
-
-
-
-
-

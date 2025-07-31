@@ -22,7 +22,7 @@ export interface IUserModel extends Model<IUser> {
 }
 
 
-const userSchema = new Schema<IUser, IUserModel>({ // Pass both DocumentType and ModelType
+const userSchema = new Schema<IUser, IUserModel>({
     username: {
         type: String,
         required: true,
@@ -51,28 +51,27 @@ const userSchema = new Schema<IUser, IUserModel>({ // Pass both DocumentType and
         type: Date,
         default: Date.now
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now
-    }
 }, {
     timestamps: true
 });
 
-userSchema.pre<IUser>('save', async function(next) { // Type 'this' as IUser
+userSchema.pre<IUser>('save', async function(next) {
+    console.log('[User.ts PRE-SAVE] Hook started.');
+
     if (!this.isModified('password')) {
+        console.log('[User.ts PRE-SAVE] Password not modified, skipping hash.');
         return next();
     }
 
     try {
+        console.log('[User.ts PRE-SAVE] Generating salt...');
         const salt = await bcrypt.genSalt(10);
+        console.log('[User.ts PRE-SAVE] Salt generated. Hashing password...');
         this.password = await bcrypt.hash(this.password, salt);
+        console.log('[User.ts PRE-SAVE] Password hashed successfully.');
         next();
-    } catch (error: any) { // Explicitly type error as 'any' or 'Error'
+    } catch (error: any) {
+        console.error('[User.ts PRE-SAVE] Error during password hashing:', error);
         next(error);
     }
 });

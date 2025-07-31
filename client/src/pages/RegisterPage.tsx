@@ -10,6 +10,7 @@ import { useAuth } from "../hooks/useAuth";
 const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -18,7 +19,7 @@ const RegisterPage: React.FC = () => {
     e.preventDefault();
     setError("");
     try {
-      const res = await api.post("/user/register", { email, password });
+      const res = await api.post("user/register", { username, email, password });
       login(res.data.token, res.data.data);
       navigate("/");
     } catch (err: any) {
@@ -34,6 +35,17 @@ const RegisterPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="Choose a username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
