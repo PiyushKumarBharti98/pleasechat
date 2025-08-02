@@ -31,7 +31,7 @@ router.post('/register', [
 
         console.log('[REGISTER] Step 1: Checking for existing user...');
         const existingUser = await User.findOne({
-            $or: [{ email }, { username }]
+            $or: [{ username }, { email }, { username }]
         });
         console.log('[REGISTER] Step 2: Finished checking for existing user.');
 
@@ -87,6 +87,7 @@ router.post('/register', [
 
 // Login route (unchanged)
 router.post('/login', [
+    body('username').isEmail().withMessage('Please enter a valid email'),
     body('email').isEmail().withMessage('Please enter a valid email'),
     body('password').exists().withMessage('Please enter your password')
 ], async (req: Request, res: Response): Promise<void> => {
@@ -101,7 +102,7 @@ router.post('/login', [
             return;
         }
 
-        const { email, password } = req.body;
+        const { username, email, password } = req.body;
 
         const user = await User.findOne({ email });
 

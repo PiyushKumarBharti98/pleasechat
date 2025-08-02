@@ -11,6 +11,7 @@ export interface User {
 
 export function useAuth() {
     const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -28,6 +29,7 @@ export function useAuth() {
                 setUser(null);
             }
         }
+        setIsLoading(false)
     }, []);
 
     const login = (token: string, user: User) => {
@@ -40,5 +42,5 @@ export function useAuth() {
         setUser(null);
     };
 
-    return { user, login, logout };
+    return { user, login, logout, isLoading };
 }

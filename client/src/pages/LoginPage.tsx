@@ -10,6 +10,7 @@ import { useAuth } from "../hooks/useAuth";
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState(""); // Added username state
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -34,6 +35,16 @@ const LoginPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username (optional)</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
