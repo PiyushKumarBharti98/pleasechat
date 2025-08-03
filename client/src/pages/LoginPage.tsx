@@ -10,7 +10,7 @@ import { useAuth } from "../hooks/useAuth";
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState(""); // Added username state
+  const [username, setUsername] = useState(""); 
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -19,7 +19,7 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setError("");
     try {
-      const res = await api.post("/user/login", { email, password });
+      const res = await api.post("/user/login", { username, email, password });
       login(res.data.token, res.data.data);
       navigate("/");
     } catch (err: any) {

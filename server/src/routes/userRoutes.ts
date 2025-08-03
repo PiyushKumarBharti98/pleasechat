@@ -87,13 +87,17 @@ router.post('/register', [
 
 // Login route (unchanged)
 router.post('/login', [
-    body('username').isEmail().withMessage('Please enter a valid email'),
+    //body('username').isEmail().withMessage('Please enter a valid email'),
     body('email').isEmail().withMessage('Please enter a valid email'),
     body('password').exists().withMessage('Please enter your password')
 ], async (req: Request, res: Response): Promise<void> => {
     try {
+        console.log('[LOGIN] Handler started.');
+
+        console.log('[LOGIN] Step 1: Validating input...');
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.log('[LOGIN] Validation failed:', errors.array());
             res.status(400).json({
                 success: false,
                 message: 'Validation failed',
@@ -103,10 +107,14 @@ router.post('/login', [
         }
 
         const { username, email, password } = req.body;
+        console.log(`[LOGIN] Attempting login for email: ${email}`);
 
+        console.log('[LOGIN] Step 2: Searching for user in database...');
         const user = await User.findOne({ email });
+        console.log('[LOGIN] Finished searching for user.');
 
         if (!user) {
+            console.log('[LOGIN] User not found in database.');
             res.status(400).json({
                 success: false,
                 message: 'Invalid user'
@@ -114,8 +122,12 @@ router.post('/login', [
             return;
         }
 
+        console.log('[LOGIN] Step 3: Comparing passwords...');
         const isMatch = await user.comparePassword(password);
+        console.log('[LOGIN] Password comparison result:', isMatch);
+
         if (!isMatch) {
+            console.log('[LOGIN] Password does not match.');
             res.status(400).json({
                 success: false,
                 message: 'Invalid credentials'
@@ -123,15 +135,20 @@ router.post('/login', [
             return;
         }
 
+        console.log('[LOGIN] Step 4: Updating user online status...');
         user.isOnline = true;
         await user.save();
+        console.log('[LOGIN] User online status updated.');
 
+        console.log('[LOGIN] Step 5: Generating JWT token...');
         const token = jwt.sign(
             { userId: user._id },
             process.env.JWT_SECRET!,
             { expiresIn: '7d' }
         );
+        console.log('[LOGIN] Token generated successfully.');
 
+        console.log('[LOGIN] Step 6: Preparing response...');
         res.json({
             success: true,
             message: 'Login successful',
@@ -146,7 +163,9 @@ router.post('/login', [
             },
             token
         });
+        console.log(`[LOGIN] Response sent successfully. with username ${user.username} and email ${user.email}`);
     } catch (error) {
+        console.error('[LOGIN] An error occurred in the handler:', error);
         res.status(500).json({
             success: false,
             message: 'Server error',
