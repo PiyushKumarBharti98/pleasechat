@@ -53,7 +53,11 @@ router.post('/register', [
 
         console.log('[REGISTER] Step 6: Generating token...');
         const token = jwt.sign(
-            { userId: user._id },
+            {
+                userId: user._id,
+                username: user.username,
+                email: user.email
+            },
             process.env.JWT_SECRET!,
             { expiresIn: '7d' }
         );

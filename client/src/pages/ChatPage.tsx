@@ -1,16 +1,32 @@
-import React, { useState, useEffect, useRef } from 'react';
-import io, { Socket } from 'socket.io-client';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import io from 'socket.io-client';
 import { useAuth, type User } from '../hooks/useAuth';
-import { api } from '../utils/api'; // Make sure you have this api utility
+import { api } from '../utils/api'; 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, Send, User as UserIcon, MessageSquarePlus } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 
+type SocketType = ReturnType<typeof io>;
 
-// Define interfaces for our chat data structures
-// Ensure these match your backend models
+// const getChatName = (chat: Chat, currentUser: User | null): string => {
+//     if (!currentUser) return 'Chat';
+//     if (chat.isGroupChat) {
+//         return chat.name || 'Group Chat';
+//     }
+//     const otherParticipant = chat.participants.find(p => p._id !== currentUser._id);
+//     return otherParticipant?.username || 'Chat';
+// };
+//
+// /**
+//  * Generates an avatar URL based on the chat name.
+//  */
+// const getChatAvatar = (chat: Chat, currentUser: User | null): string => {
+//     const name = getChatName(chat, currentUser);
+//     return `https://api.dicebear.com/8.x/lorelei/svg?seed=${name}`;
+// };
+
 interface Message {
     _id: string;
     sender: User;
@@ -25,6 +41,8 @@ interface Chat {
     isGroupChat: boolean;
     name?: string;
     lastMessage?: Message;
+    createdAt: string;
+    updatedAt: string;
 }
 
 const ChatPage: React.FC = () => {
@@ -35,13 +53,10 @@ const ChatPage: React.FC = () => {
     const [newMessage, setNewMessage] = useState('');
     const [loadingChats, setLoadingChats] = useState(true);
     const [loadingMessages, setLoadingMessages] = useState(false);
-    const socketRef = useRef<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
+    const socketRef = useRef<SocketType | null>(null);
 
 
-    // --- DATA FETCHING EFFECTS ---
-
-    // Effect 1: Fetch all user chats on component mount
     useEffect(() => {
         if (!user) return;
 
@@ -49,10 +64,18 @@ const ChatPage: React.FC = () => {
             setLoadingChats(true);
             try {
                 const token = localStorage.getItem('token');
-                const res = await api.get('/', {
+                const res = await api.get('/chat', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                setChats(res.data);
+
+                if (res.data && res.data.data && Array.isArray(res.data.data.chats)) {
+                    setChats(res.data.data.chats);
+                } else {
+                    console.error("Chat data from server was not in the expected format.", res.data);
+                    toast.error("Could not understand chat data from server.");
+                    setChats([]); 
+                }
+
             } catch (error) {
                 console.error("Failed to fetch chats", error);
                 toast.error("Failed to load your chats.");
@@ -64,7 +87,7 @@ const ChatPage: React.FC = () => {
         fetchChats();
     }, [user]);
 
-    // Effect 2: Fetch messages for the selected chat
+
     useEffect(() => {
         if (!selectedChat) return;
 
@@ -89,8 +112,6 @@ const ChatPage: React.FC = () => {
     }, [selectedChat]);
 
 
-    // --- SOCKET.IO EFFECT ---
-
     useEffect(() => {
         if (!user) return;
 
@@ -110,20 +131,16 @@ const ChatPage: React.FC = () => {
             console.log('Socket connected:', socket.id);
         });
 
-        // Listen for new messages
         socket.on('message-recieved', (message: Message) => {
-            // Check if the message belongs to the currently selected chat
             if (selectedChat && message.chat === selectedChat._id) {
                 setMessages((prevMessages) => [...prevMessages, message]);
             }
             
-            // Update the last message in the chat list for real-time feedback
             setChats(prevChats => prevChats.map(chat => 
                 chat._id === message.chat ? { ...chat, lastMessage: message } : chat
             ));
         });
 
-        // Listen for newly created chats
         socket.on('chat-created', (newChat: Chat) => {
             setChats(prevChats => [newChat, ...prevChats]);
             toast.success(`You've been added to a new chat: ${getChatName(newChat)}`);
@@ -136,15 +153,13 @@ const ChatPage: React.FC = () => {
             }
         });
 
-        // Cleanup on component unmount
         return () => {
             socket.disconnect();
             console.log('Socket disconnected');
         };
 
-    }, [user, logout, selectedChat]); // selectedChat is needed to update messages in real-time
+    }, [user, logout, selectedChat]); 
 
-    // --- UTILITY & HANDLER FUNCTIONS ---
 
      const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

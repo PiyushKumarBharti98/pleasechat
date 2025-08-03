@@ -19,18 +19,18 @@ router.get('/', authenticate, async (req: AuthRequest, res): Promise<void> => {
                 path: 'lastMessage',
                 populate: {
                     path: 'sender',
-                    select: '-password'
+                    select: 'username email'
                 }
             })
             .sort({ updatedAt: -1 });
 
         console.log(`[GET /chats] Step 2: Found ${chats.length} chats`);
         console.log('[GET /chats] Step 3: Sending response...');
-
-        res.status(200).json({
-            success: true,
-            data: { chats }
-        });
+        res.status(200).json(chats);
+        // res.status(200).json({
+        //     success: true,
+        //     data: { chats }
+        // });
         console.log('[GET /chats] Response sent successfully');
 
     } catch (error) {
@@ -42,7 +42,6 @@ router.get('/', authenticate, async (req: AuthRequest, res): Promise<void> => {
     }
 });
 
-// Create new chat
 router.post('/', authenticate, async (req: AuthRequest, res): Promise<void> => {
     try {
         console.log('[POST /chats] Handler started for user:', req.user._id);
@@ -101,7 +100,7 @@ router.post('/', authenticate, async (req: AuthRequest, res): Promise<void> => {
         await chat.save();
         await chat.populate('participants', '-password');
         console.log('[POST /chats] Chat saved successfully:', chat._id);
-
+        // res.status(200).json(chat);
         res.status(201).json({
             success: true,
             data: { chat }
