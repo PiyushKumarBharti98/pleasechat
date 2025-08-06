@@ -233,6 +233,51 @@ router.get('/test', (req: Request, res: Response) => {
     res.json({ message: 'API is working' });
 });
 
+router.get('/online', authenticate, async (req: AuthRequest, res: Response) => {
+    try {
+        if (!req.user) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        const onlineUsers = await User.find({
+            isOnline: true,
+            _id: { $ne: req.user._id }
+        }).select('-password');
+
+        res.json({
+            success: true,
+            data: {
+                users: onlineUsers
+            }
+        });
+
+    } catch (error) {
+        console.error('[GET /online] Error fetching online users:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching online users'
+        });
+    }
+});
+
+router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
+    if (!req.user) {
+        res.status(401).json({
+            success: false,
+            message: 'Unauthorized: User not found'
+        });
+        return;
+    }
+
+    res.json({
+        success: true,
+        data: {
+            user: req.user
+        }
+    });
+});
+
+
 export default router;
 
 // import express from 'express';
