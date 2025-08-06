@@ -60,9 +60,7 @@ const ChatPage: React.FC = () => {
         const fetchChats = async () => {
             setLoadingChats(true);
             try {
-                // No need for manual headers, Axios interceptor handles it.
                 const res = await api.get('/chat');
-                // The API returns the array directly now.
                 if (Array.isArray(res.data)) {
                     setChats(res.data);
                 } else {
@@ -89,9 +87,7 @@ const ChatPage: React.FC = () => {
             setLoadingMessages(true);
             setMessages([]); // Clear previous messages
             try {
-                // No need for manual headers, Axios interceptor handles it.
                 const res = await api.get(`/chat/${selectedChat._id}/messages`);
-                // Assuming the API returns messages in the format: { success, data: { messages: [...] } }
                 setMessages(res.data.data.messages);
             } catch (error) {
                 console.error("Failed to fetch messages", error);
@@ -104,10 +100,7 @@ const ChatPage: React.FC = () => {
         fetchMessages();
     }, [selectedChat]);
 
-    // --- MAJOR FIX: Split useEffect for sockets ---
 
-    // HOOK 1: Manages the socket connection itself.
-    // This runs only when the user logs in or out, creating a single, stable connection.
     useEffect(() => {
         if (!user) return;
 
@@ -130,7 +123,6 @@ const ChatPage: React.FC = () => {
             }
         });
 
-        // Clean up the connection when the component unmounts or user logs out
         return () => {
             if (socketRef.current) {
                 socketRef.current.disconnect();
@@ -141,8 +133,6 @@ const ChatPage: React.FC = () => {
     }, [user, logout]);
 
 
-    // HOOK 2: Manages the socket event listeners.
-    // This hook re-applies listeners when dependencies like `selectedChat` change.
     useEffect(() => {
         const socket = socketRef.current;
         if (!socket) return;
@@ -164,12 +154,11 @@ const ChatPage: React.FC = () => {
         socket.on('message-recieved', messageListener);
         socket.on('chat-created', chatCreatedListener);
 
-        // Clean up listeners to prevent duplicates on re-render
         return () => {
             socket.off('message-recieved', messageListener);
             socket.off('chat-created', chatCreatedListener);
         };
-    }, [selectedChat, getChatName]); // Dependency array is now correct
+    }, [selectedChat, getChatName]); 
 
 
     const scrollToBottom = () => {
@@ -190,7 +179,7 @@ const ChatPage: React.FC = () => {
             socketRef.current.emit('send-message', messageData);
             
             const optimisticMessage: Message = {
-                _id: new Date().toISOString(), // Temporary ID
+                _id: new Date().toISOString(), 
                 sender: user,
                 content: newMessage,
                 chat: selectedChat._id,
