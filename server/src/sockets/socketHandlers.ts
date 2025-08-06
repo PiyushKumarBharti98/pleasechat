@@ -37,7 +37,7 @@ export class SocketManager {
                 if (!token) {
                     return next(new Error('authentication error'));
                 }
-                const user = socketAuthenticate(token);
+                const user = await socketAuthenticate(token);
                 if (!user) {
                     return next(new Error('authenticaton error'));
                 }

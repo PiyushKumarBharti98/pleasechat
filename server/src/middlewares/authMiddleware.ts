@@ -23,7 +23,7 @@ export const authenticate = async (
         // const token = req.header('Authorization')?.replace('Bearer ', ''); // Note the space
 
         const authHeader = req.header('Authorization');
-        console.log(`authorized token is ${authHeader}`);
+        console.log(`verification starts .....`);
         let token;
         if (authHeader && authHeader.startsWith('Bearer ')) {
             token = authHeader.split(' ')[1];
@@ -53,7 +53,6 @@ export const authenticate = async (
             throw new Error('Missing JWT secret');
         }
 
-        console.log(`the environment variable is ${process.env.JWT_SECRET}`)
         console.log('Verifying JWT token...');
         const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
         console.log(`Token decoded successfully for user ID: ${decoded.userId}`);
