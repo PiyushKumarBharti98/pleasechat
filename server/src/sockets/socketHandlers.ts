@@ -112,7 +112,7 @@ export class SocketManager {
                 console.log(`user ${user.username} disconnected`);
 
                 this.connectedUsers.delete(user._id.toString());
-                this.userSockets.delete(user._id.toString());
+                this.userSockets.delete(socket.id);
 
                 this.updateUserOnlineStatus(user._id.toString(), false);
             });

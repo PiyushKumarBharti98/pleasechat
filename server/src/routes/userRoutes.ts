@@ -1,4 +1,5 @@
 import express from 'express';
+import redis from '../config/redis';
 import { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
@@ -7,7 +8,8 @@ import { authenticate, AuthRequest } from '../middlewares/authMiddleware';
 
 const router = express.Router();
 
-// Register route with detailed logging
+const CACHE_EXPIRATION_SECONDS = 3600;
+
 router.post('/register', [
     body('username').isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
     body('email').isEmail().withMessage('Please enter a valid email'),
@@ -61,6 +63,26 @@ router.post('/register', [
             process.env.JWT_SECRET!,
             { expiresIn: '7d' }
         );
+
+        //saving the user for caching
+        const savedUserObject = {
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            isOnline: user.isOnline,
+            lastSeen: user.lastSeen,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        };
+
+        //caching user data
+        await redis.setex(
+            `user:${user._id}`,
+            CACHE_EXPIRATION_SECONDS,
+            JSON.stringify(savedUserObject)
+        );
+
+        console.log(`[REGISTER] User ${user.username} cached successfully.`);
 
         console.log('[REGISTER] Step 7: Sending success response.');
         res.status(201).json({

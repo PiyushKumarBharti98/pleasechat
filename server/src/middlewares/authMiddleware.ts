@@ -2,10 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 import { validationResult } from 'express-validator';
+import redis from '../config/redis';
 
 export interface AuthRequest extends Request {
     user?: any;
 }
+
+const CACHE_EXPIRATION_SECONDS = 3600;
 
 export const authenticate = async (
     req: AuthRequest,
@@ -14,14 +17,6 @@ export const authenticate = async (
 ): Promise<void> => {
     console.log('Starting authentication process...');
     try {
-        // const token = req.cookies.jwt;
-        // console.log(`the token while verification is  ${token}`);
-        // if (!token) {
-        //     res.status(404).json({ message: "token not found" });
-        // }
-        // console.log('Checking for Authorization header...');
-        // const token = req.header('Authorization')?.replace('Bearer ', ''); // Note the space
-
         const authHeader = req.header('Authorization');
         console.log(`verification starts .....`);
         let token;
@@ -58,6 +53,18 @@ export const authenticate = async (
         console.log(`Token decoded successfully for user ID: ${decoded.userId}`);
 
         console.log(`Looking up user in database for ID: ${decoded.userId}`);
+        const userId = decoded.userId;
+
+        const cachedUser = await redis.get(`user:${userId}`);
+
+        if (cachedUser) {
+            console.log(`[AUTH] Cache hit for user id ${userId}`);
+            req.user = JSON.parse(cachedUser);
+            return next();
+        } else {
+            console.log(`[AUTH] Cache missed for ${userId} now moving forward with database queries`);
+        }
+
         const user = await User.findById(decoded.userId).select('-password');
 
         if (!user) {
@@ -68,6 +75,11 @@ export const authenticate = async (
             });
             return;
         }
+        await redis.setex(
+            `user:${user._id}`,
+            CACHE_EXPIRATION_SECONDS,
+            JSON.stringify(user),
+        )
 
         console.log(`User authenticated successfully: ${user._id}`);
         req.user = user;
@@ -88,8 +100,30 @@ export const socketAuthenticate = async (token: string) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
         console.log(`Socket token decoded for user ID: ${decoded.userId}`);
 
+        const userId = decoded.userId;
+
+        const cachedUser = await redis.get(`user:${userId}`);
+
+        if (cachedUser) {
+            console.log(`[SOCKET-AUTH] Cache HIT for user ID: ${userId}`);
+            return JSON.parse(cachedUser);
+        }
+
+        console.log(`[SOCKET-AUTH] Cache MISS for user ID: ${userId}. Querying database...`);
+
         console.log(`Looking up socket user in database for ID: ${decoded.userId}`);
         const user = await User.findById(decoded.userId).select('-password');
+
+        if (user) {
+            await redis.setex(
+                `user:${userId}`,
+                CACHE_EXPIRATION_SECONDS,
+                JSON.stringify(user)
+            );
+            console.log(`[SOCKET-AUTH] User ${user.username} (ID: ${userId}) stored in cache.`);
+        }
+
+
 
         if (!user) {
             console.log('No user found for socket token');
