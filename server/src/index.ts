@@ -1,7 +1,7 @@
 import express from 'express';
 import http from 'http';
 import connectDB from './config/db';
-
+import cookieParser from 'cookie-parser';
 import { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -15,13 +15,21 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+console.log('--- Environment Variable Check ---');
+console.log(`MONGO_URI read by Node: ${process.env.MONGO_URI}`);
+console.log('--------------------------------');
+
+
 app.use(cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",
-    //origin: "http://localhost:5173",
-    credentials: true
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+    allowedHeaders: "Content-Type, Authorization"
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(cookieParser());
 
 app.use((req: Request, res: Response, next: NextFunction) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);

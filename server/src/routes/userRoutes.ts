@@ -144,13 +144,19 @@ router.post('/login', [
         await user.save();
         console.log('[LOGIN] User online status updated.');
 
+        console.log('--- JWT SECRET USED FOR SIGNING ---');
+        console.log(`Value: '${process.env.JWT_SECRET}'`);
+        console.log('---------------------------------');
+
+        console.log('[LOGIN] JWT Secret Check:', process.env.JWT_SECRET ? 'Found' : 'NOT FOUND');
         console.log('[LOGIN] Step 5: Generating JWT token...');
         const token = jwt.sign(
-            { userId: user._id },
+            { userId: user._id.toString() },
             process.env.JWT_SECRET!,
             { expiresIn: '7d' }
         );
         console.log('[LOGIN] Token generated successfully.');
+        console.log(`[LOGIN] the token generated while login is ${token}`);
 
         console.log('[LOGIN] Step 6: Preparing response...');
         res.json({
@@ -167,7 +173,7 @@ router.post('/login', [
             },
             token
         });
-        console.log(`[LOGIN] Response sent successfully. with username ${user.username} and email ${user.email}`);
+        console.log(`[LOGIN] Response sent successfully. with username ${user.username} and email ${user.email}, and token ${token}`);
     } catch (error) {
         console.error('[LOGIN] An error occurred in the handler:', error);
         res.status(500).json({

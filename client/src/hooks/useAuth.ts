@@ -1,5 +1,55 @@
+// import { useState, useEffect } from "react";
+// import { jwtDecode } from "jwt-decode";
+//
+// export interface User {
+//     _id: string;
+//     username: string;
+//     email: string;
+//     isOnline: boolean;
+//     lastSeen: string;
+// }
+//
+// export function useAuth() {
+//     const [user, setUser] = useState<User | null>(null);
+//     const [isLoading, setIsLoading] = useState(true)
+//
+//     useEffect(() => {
+//         const checkLoggedIn = async () => {
+//             const token = localStorage.getItem("token");
+//             if (token) {
+//                 try {
+//                     const decoded: any = jwtDecode(token);
+//                     setUser({
+//                         _id: decoded.userId,
+//                         username: decoded.username,
+//                         email: decoded.email,
+//                         isOnline: true,
+//                         lastSeen: "",
+//                     });
+//                 } catch {
+//                     setUser(null);
+//                 }
+//             }
+//             setIsLoading(false);
+//         };
+//         checkLoggedIn();
+//     }, []);
+//
+//     const login = (token: string, user: User) => {
+//         localStorage.setItem("token", token);
+//         setUser(user);
+//         setIsLoading(false);
+//     };
+//
+//     const logout = () => {
+//         localStorage.removeItem("token");
+//         setUser(null);
+//     };
+//
+//     return { user, login, logout, isLoading };
+// }
 import { useState, useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
+import { api } from '../utils/api';
 
 export interface User {
     _id: string;
@@ -11,33 +61,48 @@ export interface User {
 
 export function useAuth() {
     const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true)
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            try {
-                const decoded: any = jwtDecode(token);
-                setUser({
-                    _id: decoded.userId,
-                    username: decoded.username,
-                    email: decoded.email,
-                    isOnline: true,
-                    lastSeen: "",
-                });
-            } catch {
-                setUser(null);
+        const checkLoggedIn = async () => {
+            console.log('[useAuth] useEffect running...');
+            const token = localStorage.getItem("token");
+            console.log(`[useAuth] token == ${token}`);
+
+            if (token) {
+                console.log('[useAuth] Token found in localStorage. Attempting to verify...');
+                try {
+                    console.log('[useAuth] Calling /api/user/me...');
+                    const response = await api.get('/user/me');
+                    // const response = await api.get('/user/test');
+                    console.log(`[useAuth] the actual response ${response}`);
+                    console.log('[useAuth] /me request successful. Response:', response.data);
+                    setUser(response.data.data.user);
+                } catch (error) {
+                    console.error('[useAuth] CRITICAL ERROR in checkLoggedIn:', error);
+                    localStorage.removeItem("token");
+                    setUser(null);
+                }
+            } else {
+                console.log('[useAuth] No token found in localStorage.');
             }
-        }
-        setIsLoading(false)
+
+            console.log('[useAuth] Finished check. Setting isLoading to false.');
+            setIsLoading(false);
+        };
+
+        checkLoggedIn();
     }, []);
 
     const login = (token: string, user: User) => {
+        console.log('[useAuth] login function called.');
         localStorage.setItem("token", token);
         setUser(user);
+        setIsLoading(false);
     };
 
     const logout = () => {
+        console.log('[useAuth] logout function called.');
         localStorage.removeItem("token");
         setUser(null);
     };

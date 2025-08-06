@@ -20,7 +20,7 @@ const LoginPage: React.FC = () => {
     setError("");
     try {
       const res = await api.post("/user/login", { username, email, password });
-      login(res.data.token, res.data.data);
+      login(res.data.token, res.data.user);
       navigate("/");
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed");
