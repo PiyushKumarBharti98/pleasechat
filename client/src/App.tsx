@@ -1,30 +1,53 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import { LogIn, UserPlus } from "lucide-react";
+//import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import ChatPage from './pages/ChatPage'; // Make sure ChatPage is imported
-import ProtectedRoute from './components/ProtectedRoute'; // Import the protector
-import "./App.css";
+import ChatPage from './pages/ChatPage';
+import LandingPage from './pages/LandingPage'; 
+import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute'; 
 
 function App() {
   return (
     <Router>
-      {/* This outer div can be removed if you want ChatPage to be full-screen */}
-      <div className="min-h-screen bg-gray-100">
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <ChatPage />
-              </ProtectedRoute>
-            } 
-          />
-        </Routes>
-      </div>
+      {/* The outer div is removed to allow pages to control their own full-screen backgrounds */}
+      <Routes>
+        {/* Public Routes: Accessible only when logged out */}
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <LandingPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <RegisterPage />
+            </PublicRoute>
+          }
+        />
+
+        {/* Protected Route: Accessible only when logged in */}
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
     </Router>
   );
 }

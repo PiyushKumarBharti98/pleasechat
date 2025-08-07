@@ -53,8 +53,6 @@ const ChatPage: React.FC = () => {
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState('');
 
-    // NEW: Create a ref to hold the current selected chat.
-    // This solves the "stale closure" problem for our socket listeners.
     const selectedChatRef = useRef<Chat | null>(null);
     useEffect(() => {
         selectedChatRef.current = selectedChat;
