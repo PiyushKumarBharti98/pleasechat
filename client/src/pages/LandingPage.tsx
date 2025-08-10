@@ -1,17 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom'; // Use Link for internal navigation
 
-// Note: For the Goldman-Regular font to work, you must add its <link> tag 
-// to the <head> section of your main `public/index.html` file.
-/*
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Goldman-Regular:wght@700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-*/
-
-// Note: The custom brand colors should ideally be configured in your tailwind.config.js file.
-// For simplicity here, we are using inline styles where necessary or relying on arbitrary values.
-
 const LandingPage: React.FC = () => {
     
     return (

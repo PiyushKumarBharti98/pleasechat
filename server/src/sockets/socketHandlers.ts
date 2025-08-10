@@ -1,17 +1,18 @@
 import { Server as SocketIOServer } from 'socket.io';
 import mongoose from "mongoose";
 import { Server as HTTPServer } from 'http';
-import jwt from 'jsonwebtoken';
+//import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
-import { Chat, IChat } from '../models/Chat';
+import { Chat } from '../models/Chat';
+//import { IChat } from '../models/Chat';
 import { Message } from '../models/Message';
 import { socketAuthenticate } from '../middlewares/authMiddleware';
-import { existsSync } from 'fs';
+//import { existsSync } from 'fs';
 
-interface socketUser {
-    userId: string,
-    socketId: string
-}
+// interface socketUser {
+//     userId: string,
+//     socketId: string
+// }
 
 export class SocketManager {
     private io: SocketIOServer;
@@ -251,5 +252,3 @@ export class SocketManager {
     }
 
 }
-
-
